@@ -1,5 +1,6 @@
 import { MODULE_BY_KEY } from '@/data/modules'
-import { allRows, listRows, resetRows, saveRows } from '@/data/local-store'
+import { listRows, readSnapshot, removeModule, resetRows, saveRows } from '@/data/local-store'
+import { useSessionStore } from '@/stores/session'
 import type { ActionResult, EntryRow, ModuleMeta, OverviewResult, PageResult } from '@/data/types'
 
 // 会写进数据的「往回走」动作：命中就把这条记录标成异常态，看板上能一眼看出来。
@@ -26,6 +27,12 @@ export function filterRows(rows: EntryRow[], filters: Record<string, string>): E
 export function listEntries(key: string, filters: Record<string, string> = {}): PageResult {
   const matched = filterRows(listRows(key), filters)
   return { items: matched, total: matched.length, page: 1, size: matched.length }
+}
+
+// 详情读数与列表走同一个数据入口，两边看到的永远是同一份本地数据
+export function getEntry(key: string, id: number): EntryRow | undefined {
+  moduleMeta(key)
+  return listRows(key).find((row) => Number(row.id) === id)
 }
 
 export function runAction(key: string, id: number, action: string): ActionResult {
@@ -61,6 +68,13 @@ export function resetModule(key: string): PageResult {
   return listEntries(key)
 }
 
+// 删除模块：数据与迁移清单同步移除，之后初始化与迁移都不会再把它带回
+export function dropModule(key: string): ActionResult {
+  const meta = moduleMeta(key)
+  removeModule(key)
+  return { ok: true, message: `${meta.entity}模块已删除，不会再被初始数据带回` }
+}
+
 export function exportEntries(key: string): { filename: string; content: string } {
   const meta = moduleMeta(key)
   const header = ['编号', ...meta.fields, '当前状态']
@@ -85,7 +99,9 @@ export function downloadEntries(key: string): void {
 }
 
 export function loadOverview(): OverviewResult {
-  const rows = allRows()
+  // 整仓快照属于越权敏感面：会话没有 snapshot:read 权限就在这里被拒之门外
+  const session = useSessionStore()
+  const rows = readSnapshot({ permissions: session.permissions })
   const modules = [...MODULE_BY_KEY.values()].map((meta) => {
     const entries = rows[meta.key] ?? []
     return {

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import Dashboard from '@/views/Dashboard.vue'
+import { useSessionStore } from '@/stores/session'
 const Stand = () => import('@/views/stand/index.vue')
 const Bridge = () => import('@/views/bridge/index.vue')
 const GroundPower = () => import('@/views/ground_power/index.vue')
@@ -43,6 +44,13 @@ const router = createRouter({
     { path: '/load_equip', name: 'load_equip', component: LoadEquip },
     { path: '/air_emergency', name: 'air_emergency', component: AirEmergency },
   ],
+})
+
+// 跨会话定位：每次进入模块页都记住位置，重开浏览器能回到正确模块
+router.afterEach((to) => {
+  if (typeof to.name === 'string' && to.name !== 'dashboard') {
+    useSessionStore().rememberModule(to.name)
+  }
 })
 
 export default router

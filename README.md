@@ -68,4 +68,15 @@ npm run build
 - 字段、状态、动作与流转目标集中在 `frontend/src/data/modules.ts`；示例数据在
   `frontend/src/data/seed.ts`。
 - 状态流转只允许在 `local-service.ts` 里改，页面组件不做业务判断。
-- 想回到初始数据：清掉浏览器里 `airport-ground-handling:entries` 这一项，或调用 `resetModule(模块)`。
+- 本地存储分两个键：业务数据 `airport-ground-handling:entries` 与迁移清单
+  `airport-ground-handling:manifest`。初始化与迁移统一走 `local-store.ts` 的 `ensureStore()`：
+  缺字段逐行补齐（从同编号种子行借值），已有值不覆盖；业务数据每次迁移只回写一次；
+  清单记录待处理项，迁移中断后下次启动从待处理项继续。
+- 删除模块走 `dropModule(模块)`：数据与清单同步移除并记入删除名单，之后初始化与迁移
+  都不会再把它带回；`resetModule(模块)` 或重新登记会把它从删除名单里拿掉。
+- 整仓快照（运营概览）需要会话具备 `snapshot:read` 权限，越权读取会被数据层拒绝；
+  模块页面只能读自己模块的数据。
+- 跨会话定位：最后所在模块记在 `airport-ground-handling:position`，重开浏览器回到该模块；
+  定位指向的模块已下线时自动清除，留在运营概览。
+- 想回到初始数据：清掉浏览器里 `airport-ground-handling:entries` 这一项，或调用 `resetModule(模块)`；
+  存储损坏时原数据会备份到 `airport-ground-handling:corrupt` 再重新播种。
