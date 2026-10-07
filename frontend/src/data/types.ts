@@ -27,6 +27,12 @@ export type PageResult = {
   size: number
 }
 
+/** 整仓快照的读取授权：由会话层签发，数据层只认凭证不认调用方。 */
+export type SnapshotAuth = {
+  operator: string
+  scope: string
+}
+
 export type ActionResult = {
   ok: boolean
   message: string

@@ -68,4 +68,11 @@ npm run build
 - 字段、状态、动作与流转目标集中在 `frontend/src/data/modules.ts`；示例数据在
   `frontend/src/data/seed.ts`。
 - 状态流转只允许在 `local-service.ts` 里改，页面组件不做业务判断。
+- 本地快照带版本号（当前 v2），首次播种、旧版升级、损坏重建与中断续迁走同一条迁移管线：
+  按行归一化（已有字段保留、缺字段补齐，绝不整行覆盖），全部模块迁完才一次性回写主快照；
+  迁移进度记录在 `airport-ground-handling:migration` 台账里，中断后从待处理模块继续。
+  已删除的模块在迁移时即被过滤，不会再被旧数据带回来。
+- 运营概览读取整仓快照必须持会话签发的授权（`session.snapshotAuth`），越权读取会被数据层拒绝。
+- 上次所在模块记录在 `airport-ground-handling:last-position`，下次打开从首页进入时按命名路由
+  恢复；模块已删除时定位自动清除，不会指过去。
 - 想回到初始数据：清掉浏览器里 `airport-ground-handling:entries` 这一项，或调用 `resetModule(模块)`。

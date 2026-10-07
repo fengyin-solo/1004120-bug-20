@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import { rememberPosition } from '@/data/last-position'
 import Dashboard from '@/views/Dashboard.vue'
 const Stand = () => import('@/views/stand/index.vue')
 const Bridge = () => import('@/views/bridge/index.vue')
@@ -43,6 +44,13 @@ const router = createRouter({
     { path: '/load_equip', name: 'load_equip', component: LoadEquip },
     { path: '/air_emergency', name: 'air_emergency', component: AirEmergency },
   ],
+})
+
+// 每进入一个业务模块就记下位置，供下次会话恢复；路由名即模块 key。
+router.afterEach((to) => {
+  if (typeof to.name === 'string' && to.name !== 'dashboard') {
+    rememberPosition(to.name)
+  }
 })
 
 export default router
